@@ -10,23 +10,54 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Loader2, Send, CheckCircle2, ArrowLeft, Trophy, Users, Star } from "lucide-react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiClient";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
 
-export default function ClubRequestPage() {
+const DOMAINS = [
+  "Technical",
+  "Cultural",
+  "Sports",
+  "Literary",
+  "Social Service",
+  "Research",
+  "Entrepreneurship",
+  "Creative Arts"
+];
+
+const buttonClickInteraction = {
+  whileHover: { scale: 1.02, y: -1 },
+  whileTap: { scale: 0.98, y: 0 },
+  transition: { type: "spring" as const, stiffness: 400, damping: 15 }
+};
+
+export default function RedesignedClubRequestPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDomains, setSelectedDomains] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     club_name: "",
     club_email: "",
     president_name: "",
-    category: "",
     description: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleDomainToggle = (domain: string) => {
+    if (selectedDomains.includes(domain)) {
+      setSelectedDomains(prev => prev.filter(d => d !== domain));
+    } else {
+      if (selectedDomains.length >= 3) {
+        toast.error("You can select up to 3 domains.");
+        return;
+      }
+      setSelectedDomains(prev => [...prev, domain]);
+    }
   };
 
   const handleRequest = async (e: React.FormEvent) => {
@@ -41,11 +72,20 @@ export default function ClubRequestPage() {
       return;
     }
 
+    if (selectedDomains.length === 0) {
+      setError("Please select at least 1 domain for your club.");
+      setLoading(false);
+      return;
+    }
+
     try {
       await apiFetch("/auth/club-request", {
         method: "POST",
         requireAuth: false,
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          category: selectedDomains.join(", ")
+        }),
       });
       setSubmitted(true);
     } catch (err: any) {
@@ -57,113 +97,145 @@ export default function ClubRequestPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950 text-zinc-100 relative overflow-hidden">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-[#faf9f6] text-[#0f0f10] relative overflow-hidden">
         {/* Background elements */}
-        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-brand/10 rounded-full blur-[100px] animate-pulse"></div>
-        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px] animate-pulse"></div>
-        
-        <Card className="w-full max-w-lg z-10 border-emerald-500/30 bg-zinc-950/50 backdrop-blur-xl shadow-2xl p-8 text-center space-y-8 rounded-[3rem]">
-          <div className="flex justify-center">
-            <div className="w-24 h-24 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="w-12 h-12" />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -left-40 top-0 w-[500px] h-[500px] rounded-full bg-[#e9e6df] blur-[120px] opacity-35" />
+          <div className="absolute -right-40 top-0 w-[500px] h-[500px] rounded-full bg-[#e9e6df] blur-[120px] opacity-35" />
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md z-10"
+        >
+          <Card className="w-full border border-black/5 bg-white shadow-[0_24px_48px_rgba(0,0,0,0.03)] p-8 text-center space-y-6 rounded-[32px]">
+            <div className="flex justify-center">
+              <div className="w-20 h-20 rounded-full bg-[#855300]/10 border border-[#855300]/20 flex items-center justify-center text-[#855300]">
+                <CheckCircle2 className="w-10 h-10" />
+              </div>
             </div>
-          </div>
-          <div className="space-y-4">
-             <h1 className="text-4xl font-dmserif font-bold text-white">Application Received!</h1>
-             <p className="text-zinc-400 text-lg leading-relaxed">
-               Thank you for your interest in joining the HMU community. Our team will review your application for <strong>{formData.club_name}</strong> and get back to you at <strong>{formData.club_email}</strong>.
-             </p>
-          </div>
-          <div className="pt-4 border-t border-emerald-500/10">
-             <Link href="/signin">
-               <Button className="rounded-full h-14 px-10 bg-emerald-500 hover:bg-emerald-600 text-white font-bold group">
-                 Back to Login
-               </Button>
-             </Link>
-          </div>
-        </Card>
+            <div className="space-y-3">
+              <h1 className="text-2xl font-dmserif font-bold text-[#0f0f10]">Application Received!</h1>
+              <p className="text-neutral-500 text-xs sm:text-sm leading-relaxed">
+                Thank you for your interest in joining the intrst community. Our team will review your application for <strong className="text-black font-semibold">{formData.club_name}</strong> and get back to you at <strong className="text-black font-semibold">{formData.club_email}</strong>.
+              </p>
+            </div>
+            <div className="pt-4 border-t border-black/5">
+              <Link href="/signin">
+                <motion.div {...buttonClickInteraction} className="inline-block">
+                  <Button className="rounded-full h-11 px-8 bg-black hover:bg-[#505f78] text-white font-bold group">
+                    Back to Login
+                  </Button>
+                </motion.div>
+              </Link>
+            </div>
+          </Card>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-zinc-950 text-zinc-100">
-      {/* Left side: branding/info */}
-      <div className="w-full md:w-1/2 lg:w-2/5 p-8 md:p-16 flex flex-col justify-center space-y-12 relative overflow-hidden border-r border-white/5">
-        <div className="absolute top-0 left-0 w-full h-full opacity-30 pointer-events-none">
-          <div className="absolute top-1/4 -left-1/4 w-[150%] h-[150%] bg-gradient-radial from-brand/20 to-transparent blur-[120px]"></div>
-        </div>
-
-        <Link href="/" className="inline-flex items-center gap-2 group text-zinc-400 hover:text-white transition-colors">
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          <span className="text-sm font-semibold uppercase tracking-widest">Back Home</span>
-        </Link>
-        
-        <div className="space-y-6 relative">
-          <div className="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center text-brand mb-8 box-shadow-[0_0_30px_rgba(194,105,42,0.2)]">
-            <Trophy className="w-8 h-8" />
-          </div>
-          <h1 className="text-5xl lg:text-7xl font-dmserif font-bold tracking-tight leading-[1.1]">
-            Elevate Your <br />
-            <span className="text-brand italic">Club&apos;s Presence.</span>
-          </h1>
-          <p className="text-xl text-zinc-400 font-medium leading-relaxed max-w-md">
-            The HMU Platform is exclusive Gitam community for clubs to host events, engage with members, and grow their influence.
-          </p>
-        </div>
-
-        <div className="space-y-8 pt-8 border-t border-white/5 relative">
-           <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
-                 <Users className="w-5 h-5" />
-              </div>
-              <div>
-                 <h3 className="font-bold text-white uppercase tracking-widest text-xs mb-1">Engage Students</h3>
-                 <p className="text-sm text-zinc-500">Reach a wider audience and get more registrations for your events.</p>
-              </div>
-           </div>
-           <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center text-brand shrink-0">
-                 <Star className="w-5 h-5 fill-brand" />
-              </div>
-              <div>
-                 <h3 className="font-bold text-white uppercase tracking-widest text-xs mb-1">Official Verification</h3>
-                 <p className="text-sm text-zinc-500">Get the blue checkmark and official status on campus.</p>
-              </div>
-           </div>
-        </div>
+    <main className="min-h-screen w-full flex items-start justify-center relative overflow-hidden p-6 pt-20 md:pt-24 lg:pt-32" style={{ backgroundColor: "#faf9f6" }}>
+      {/* Background Glow Decorations */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute left-[-20%] top-[10%] w-[500px] h-[500px] rounded-full bg-[#e9e6df] blur-[120px] opacity-30"></div>
+        <div className="absolute right-[-20%] bottom-[10%] w-[500px] h-[500px] rounded-full bg-[#e9e6df] blur-[120px] opacity-30"></div>
       </div>
 
-      {/* Right side: Request Form */}
-      <div className="w-full md:w-1/2 lg:w-3/5 p-8 md:p-16 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed overflow-y-auto">
-        <Card className="w-full max-w-xl border-zinc-800 bg-zinc-900/40 backdrop-blur-xl shadow-2xl p-6 sm:p-10 rounded-[2.5rem]">
-           <CardHeader className="p-0 mb-8">
-              <CardTitle className="text-3xl font-dmserif font-bold text-white mb-2">Request Access</CardTitle>
-              <CardDescription className="text-zinc-400">Please provide your club details for manual verification.</CardDescription>
-           </CardHeader>
-           <CardContent className="p-0">
+      <div className="w-full max-w-5xl grid lg:grid-cols-12 gap-8 lg:gap-16 items-start relative z-10">
+
+        {/* Left Side Content */}
+        <div className="lg:col-span-5 hidden lg:flex flex-col justify-center space-y-10 pt-4">
+          <div className="relative z-20 max-w-md select-none">
+            <Link href="/" className="inline-flex items-center gap-2 group text-neutral-500 hover:text-black transition-colors mb-6">
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-xs font-bold uppercase tracking-widest">Back Home</span>
+            </Link>
+
+            <div className="space-y-6">
+              <div className="w-14 h-14 rounded-2xl bg-[#855300]/10 border border-[#855300]/20 flex items-center justify-center text-[#855300] mb-4">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <h1 className="text-4xl xl:text-5xl font-bold tracking-tight leading-[1.1] text-[#0f0f10]">
+                Elevate Your <br />
+                <span className="bg-gradient-to-r from-[#505f78] to-[#855300] bg-clip-text text-transparent font-serif italic font-normal pr-4 inline-block">
+                  Club&apos;s Presence.
+                </span>
+              </h1>
+              <p className="text-sm text-neutral-500 font-normal leading-relaxed">
+                The intrst platform is the exclusive campus community for clubs to host events, engage with members, and grow their influence.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-6 pt-8 border-t border-black/5 relative max-w-md">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-[#505f78]/10 border border-[#505f78]/20 flex items-center justify-center text-[#505f78] shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#0f0f10] uppercase tracking-widest text-[10px] mb-0.5">Engage Students</h3>
+                <p className="text-xs text-neutral-500 leading-relaxed">Reach a wider audience and get more registrations for your events.</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-[#855300]/10 border border-[#855300]/20 flex items-center justify-center text-[#855300] shrink-0">
+                <Star className="w-5 h-5 fill-[#855300]/20" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#0f0f10] uppercase tracking-widest text-[10px] mb-0.5">Official Verification</h3>
+                <p className="text-xs text-neutral-500 leading-relaxed">Get the blue checkmark and official status on campus.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Form Card Container */}
+        <div className="lg:col-span-7 flex flex-col items-center lg:items-end w-full">
+
+          {/* Back Home for Mobile */}
+          <div className="w-full flex lg:hidden justify-start mb-6">
+            <Link href="/" className="inline-flex items-center gap-2 group text-neutral-500 hover:text-black transition-colors">
+              <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+              <span className="text-xs font-bold uppercase tracking-widest">Back Home</span>
+            </Link>
+          </div>
+
+          <Card className="w-full max-w-[540px] border border-neutral-200/60 shadow-[0_24px_48px_rgba(0,0,0,0.03)] p-6 sm:p-10 rounded-[32px] bg-white">
+            <CardHeader className="p-0 mb-8 text-center sm:text-left">
+              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center text-white font-bold text-sm mb-3 mx-auto sm:mx-0">i</div>
+              <CardTitle className="text-2xl font-bold tracking-tight text-[#0f0f10] mb-1.5">
+                Request <span className="font-serif italic font-normal text-[#505f78]">Access</span>
+              </CardTitle>
+              <CardDescription className="text-neutral-500 text-xs font-medium">Please provide your club details for manual verification.</CardDescription>
+            </CardHeader>
+
+            <CardContent className="p-0">
               <form onSubmit={handleRequest} className="space-y-6">
                 {error && (
-                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-400 text-sm font-medium">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium">
                     {error}
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="club_name" className="text-zinc-300 font-bold uppercase tracking-widest text-[10px]">Club Name</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="club_name" className="text-neutral-500 font-bold uppercase tracking-widest text-[9px]">Club Name</Label>
                     <Input
                       id="club_name"
                       name="club_name"
                       placeholder="e.g. Code Wizards"
                       value={formData.club_name}
                       onChange={handleChange}
-                      className="bg-zinc-950 border-zinc-800 rounded-xl h-12 h-14"
+                      className="bg-white border-[#c5c6cd] rounded-xl h-11 focus:border-black focus-visible:ring-0 text-[#0f0f10] placeholder:text-neutral-300 text-xs font-medium"
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="club_email" className="text-zinc-300 font-bold uppercase tracking-widest text-[10px]">Contact Email</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="club_email" className="text-neutral-500 font-bold uppercase tracking-widest text-[9px]">Contact Email</Label>
                     <Input
                       id="club_email"
                       name="club_email"
@@ -171,81 +243,95 @@ export default function ClubRequestPage() {
                       placeholder="club@gitam.in"
                       value={formData.club_email}
                       onChange={handleChange}
-                      className="bg-zinc-950 border-zinc-800 rounded-xl h-14"
+                      className="bg-white border-[#c5c6cd] rounded-xl h-11 focus:border-black focus-visible:ring-0 text-[#0f0f10] placeholder:text-neutral-300 text-xs font-medium"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="president_name" className="text-zinc-300 font-bold uppercase tracking-widest text-[10px]">President / Representative Name</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="president_name" className="text-neutral-500 font-bold uppercase tracking-widest text-[9px]">President / Representative Name</Label>
                   <Input
                     id="president_name"
                     name="president_name"
                     placeholder="Full Name"
                     value={formData.president_name}
                     onChange={handleChange}
-                    className="bg-zinc-950 border-zinc-800 rounded-xl h-14"
+                    className="bg-white border-[#c5c6cd] rounded-xl h-11 focus:border-black focus-visible:ring-0 text-[#0f0f10] placeholder:text-neutral-300 text-xs font-medium"
                     required
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category" className="text-zinc-300 font-bold uppercase tracking-widest text-[10px]">Club Category</Label>
-                  <select 
-                    id="category" 
-                    name="category"
-                    value={formData.category}
-                    onChange={(e: any) => setFormData({...formData, category: e.target.value})}
-                    className="flex h-14 w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2 text-sm text-zinc-300 outline-none ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <option value="">Select a category</option>
-                    <option value="Technical">Technical</option>
-                    <option value="Cultural">Cultural</option>
-                    <option value="Sports">Sports</option>
-                    <option value="Literary">Literary</option>
-                    <option value="Social Service">Social Service</option>
-                    <option value="Other">Other</option>
-                  </select>
+                {/* Multi-select Club Domains */}
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-neutral-500 font-bold uppercase tracking-widest text-[9px]">Club Domains (Select up to 3)</Label>
+                    <span className="text-[10px] font-bold text-[#855300] tracking-wide">
+                      {selectedDomains.length} / 3 selected
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-0.5">
+                    {DOMAINS.map((domain) => {
+                      const isSelected = selectedDomains.includes(domain);
+                      return (
+                        <button
+                          type="button"
+                          key={domain}
+                          onClick={() => handleDomainToggle(domain)}
+                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${isSelected
+                            ? "bg-black border-black text-white shadow-sm"
+                            : "bg-[#faf9f6] border-black/5 text-neutral-500 hover:bg-neutral-100 hover:border-black/10"
+                            }`}
+                        >
+                          {domain}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-zinc-300 font-bold uppercase tracking-widest text-[10px]">Short Description</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="description" className="text-neutral-500 font-bold uppercase tracking-widest text-[9px]">Short Description</Label>
                   <Textarea
                     id="description"
                     name="description"
                     placeholder="Briefly describe your club's mission and regular activities..."
                     value={formData.description}
                     onChange={handleChange}
-                    className="bg-zinc-950 border-zinc-800 rounded-xl min-h-[120px]"
+                    className="bg-white border-[#c5c6cd] rounded-xl min-h-[100px] focus:border-black focus-visible:ring-0 text-[#0f0f10] placeholder:text-neutral-300 text-xs font-medium"
                   />
                 </div>
 
-                <Button
-                  className="w-full bg-brand hover:bg-accent text-white font-bold h-14 rounded-xl transition-all shadow-lg hover:shadow-brand/20 group"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting Request...
-                    </>
-                  ) : (
-                    <>
-                      Send Join Request <Send className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </>
-                  )}
-                </Button>
+                <motion.div {...buttonClickInteraction} className="pt-2">
+                  <Button
+                    className="w-full bg-black hover:bg-[#505f78] text-white font-bold h-12 rounded-full transition-all shadow-sm group flex items-center justify-center gap-2"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting Request...
+                      </>
+                    ) : (
+                      <>
+                        Send Join Request
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
               </form>
-           </CardContent>
-           <CardFooter className="p-0 mt-8 justify-center">
-              <p className="text-sm text-zinc-500">
-                 Already verified? <Link href="/signin" className="text-brand font-bold underline hover:text-white transition-colors">Sign in here</Link>
+            </CardContent>
+
+            <CardFooter className="bg-transparent p-0 mt-8 flex justify-center items-center border-0">
+              <p className="text-xs text-neutral-500 font-medium">
+                Already verified? <Link href="/signin" className="text-[#855300] font-bold underline hover:text-black transition-colors">Sign in here</Link>
               </p>
-           </CardFooter>
-        </Card>
+            </CardFooter>
+          </Card>
+        </div>
+
       </div>
-    </div>
+    </main>
   );
 }

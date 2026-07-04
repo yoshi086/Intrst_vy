@@ -2,33 +2,152 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: #faf9f6;
+  --foreground: #0f0f10;
+
+  --card: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.05);
+
+  --muted: #737373;
+
+  --brand: #000000;
+  --accent: #505f78;
+}
+
 @layer base {
+  * {
+    border-color: var(--card-border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply tracking-tight;
+    background: var(--background);
+    color: var(--foreground);
   }
-  
-  h1, h2 {
+
+  h1,
+  h2 {
     @apply font-dmserif tracking-normal;
   }
-  
-  h3, h4, h5, h6 {
+
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-playfair tracking-normal;
   }
 }
 
 @layer utilities {
+  .bg-background {
+    background-color: var(--background);
+  }
+
+  .text-foreground {
+    color: var(--foreground);
+  }
+
+  .bg-card {
+    background-color: var(--card);
+    backdrop-filter: blur(20px);
+  }
+
+  .border-border {
+    border-color: var(--card-border);
+  }
+
+  .text-muted-foreground {
+    color: var(--muted);
+  }
+
+  .bg-brand {
+    background-color: var(--brand);
+  }
+
+  .text-brand {
+    color: var(--brand);
+  }
+
+  .border-brand {
+    border-color: var(--brand);
+  }
+
+  .bg-accent {
+    background-color: var(--accent);
+  }
+
+  .text-accent {
+    color: var(--accent);
+  }
+
   .glow-hover {
-    @apply transition-all duration-200;
+    transition: all 0.3s ease;
   }
+
   .glow-hover:hover {
-    box-shadow: 0 0 25px rgba(192, 38, 211, 0.18);
-    border-color: rgba(192, 38, 211, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
   }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 }
+
+/* Brand focus & active styles overrides to keep premium black theme */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[data-slot="button"]:focus-visible,
+[data-slot="input"]:focus-visible,
+[data-slot="textarea"]:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px #faf9f6, 0 0 0 4px rgba(0, 0, 0, 0.12) !important;
+  border-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+button:active,
+[data-slot="button"]:active {
+  transform: scale(0.98) !important;
+  transition: transform 0.1s ease !important;
+}
+
+/* Ensure hover state of black buttons stays in the black/neutral family */
+.bg-black.hover\:bg-\[\#505f78\]:hover,
+button.bg-black:hover,
+[data-slot="button"].bg-black:hover,
+.bg-black:hover {
+  background-color: #262626 !important;
+  /* Lighter black / neutral-800 */
+}
+
+/* Ensure active/pressed black buttons stay in black theme */
+.bg-black.hover\:bg-\[\#505f78\]:active,
+button.bg-black:active,
+[data-slot="button"].bg-black:active,
+.bg-black:active,
+.bg-black.hover\:bg-\[\#505f78\]:focus,
+button.bg-black:focus,
+[data-slot="button"].bg-black:focus,
+.bg-black:focus {
+  background-color: #161617 !important;
+  /* Rich dark off-black */
+}
+
+/* Hide default browser password reveal and clear buttons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
